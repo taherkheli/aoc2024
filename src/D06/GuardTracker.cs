@@ -32,16 +32,82 @@
       }
     }
 
-    public int PartI()
+    public int Execute(bool isPartII = false) 
+    {
+      if (isPartII)
+        return PartII();
+      else
+        return PartI();
+    }
+
+    private int PartI()
     {
       int result = 0;
+
+      if (Simulate())  //guard exited grid
+      {
+        for (int r = 0; r < _rows; r++)
+          for (int c = 0; c < _cols; c++)
+            if (_grid[r, c].VisitCount > 0)
+              result++;
+      }
+      else
+        result = -1;
+
+      return result;
+    }
+
+    private int PartII()
+    {
+      int ri = -1;
+      int ci = -1;
+      int trappedCount = 0;
+
+      //intial psoition
+      if (this._guard != null)
+      {
+        ri = this._guard.Pos.R;
+        ci = this._guard.Pos.C;
+      }
+
+      for (int r = 0; r < _rows; r++)
+      {
+        for (int c = 0; c < _cols; c++)
+        {
+          // if already obstructed or initial position
+          if ((_grid[r, c].Obstructed) || ((r == ri) && (c == ci)))
+            continue;
+
+          // put an obstruction
+          _grid[r, c].Obstructed = true;
+
+          if (!Simulate())  //guard trapped
+            trappedCount++;
+
+          //reset grid and restore guard's initial position 
+          if (this._guard != null)
+          {
+            _guard.Pos = new Position(ri, ci);
+            _guard.Direction = Direction.Up;
+          }
+          _grid[r, c].Obstructed = false;
+        }
+      }
+
+      return trappedCount;
+    }
+
+    private bool Simulate()
+    {
       bool onEdge = false;
+      bool exited = false;
+      int loopCount = 0;
 
       if (this._guard != null)
       {
-        while( (_guard.Pos.C > -1) && (_guard.Pos.C < _cols) && (_guard.Pos.R > -1) && (_guard.Pos.R < _rows) )
+        while(true)
         {
-          int r = 0; 
+          int r = 0;
           int c = 0;
 
           switch (this._guard.Direction)
@@ -54,7 +120,7 @@
                 onEdge = true;
               }
               else if (_grid[_guard.Pos.R - 1, _guard.Pos.C].Obstructed)
-              { 
+              {
                 _guard.Direction = Direction.Right;
                 r = _guard.Pos.R;
                 c = _guard.Pos.C + 1;
@@ -73,7 +139,7 @@
                 c = _guard.Pos.C;
                 onEdge = true;
               }
-              else if (_grid[_guard.Pos.R + 1, _guard.Pos.C].Obstructed) 
+              else if (_grid[_guard.Pos.R + 1, _guard.Pos.C].Obstructed)
               {
                 _guard.Direction = Direction.Left;
                 r = _guard.Pos.R;
@@ -140,15 +206,22 @@
               _guard.Pos = new Position(r, c);
             }
           }
+
+          if ( (_guard.Pos.C < 0) || (_guard.Pos.C > _cols - 1) || (_guard.Pos.R < 0) || (_guard.Pos.R > _rows - 1) )
+          {
+            exited = true;
+            break;
+          }
+          else
+          {
+            loopCount++;
+            if (loopCount > 6000)  //magic number tuned manually. :)
+              break;
+          }
         }
       }
 
-      for (int r = 0; r < _rows; r++)
-        for (int c = 0; c < _cols; c++)
-          if (_grid[r,c].VisitCount > 0)
-            result++;
-
-      return result;
+      return exited;
     }
   }
 }
