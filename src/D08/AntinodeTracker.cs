@@ -1,6 +1,4 @@
-﻿using aoc.D06;
-
-namespace aoc.D08
+﻿namespace aoc.D08
 {
   public class AntinodeTracker
   {
